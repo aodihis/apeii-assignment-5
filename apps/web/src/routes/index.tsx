@@ -10,6 +10,9 @@ export const Route = createFileRoute("/")({
   component: HomePage,
 });
 
+// Falls back to the dev-only Vite proxy path when PUBLIC_API_URL is unset.
+const API_BASE = import.meta.env.VITE_API_URL || "/api";
+
 function HomePage() {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState("");
@@ -28,7 +31,7 @@ function HomePage() {
     setError(null);
 
     try {
-      const res = await fetch("/api/chat", {
+      const res = await fetch(`${API_BASE}/chat`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ messages: nextMessages }),

@@ -75,7 +75,7 @@ app.get("/sessions/:id/messages", async (c) => {
   return c.json(await memoryStore.load({ scope: scopeFor(c.req.param("id")) }));
 });
 
-const port = Number(process.env.PORT ?? 3000);
+const port = Number(process.env.API_PORT ?? 3000);
 
 serve({ fetch: app.fetch, port }, (info) => {
   console.log(`API listening on http://localhost:${info.port}`);
