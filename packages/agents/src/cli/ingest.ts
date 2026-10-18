@@ -1,7 +1,7 @@
 import { ingestVectorDocuments } from "@anvia/core/vector-store";
 import { loadHadiths, toDocuments } from "../hadith";
 import { getEmbeddingModel } from "../models";
-import { getChromaClient, getHadithStore, COLLECTIONS, type CollectionName } from "../store";
+import { getQdrantClient, getHadithStore, COLLECTIONS, type CollectionName } from "../store";
 
 const target = process.argv[2] ?? "data";
 if (target !== "data" && target !== "eval") {
@@ -26,5 +26,5 @@ try {
 
   console.log(`Ingested ${documents.length} hadiths into collection "${collectionName}".`);
 } finally {
-  await getChromaClient().close();
+  await getQdrantClient().close();
 }

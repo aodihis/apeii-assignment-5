@@ -12,10 +12,10 @@
     "eval:hadith": "node --env-file-if-exists=../../.env --import tsx src/evals/hadith.ts"
   },
   "dependencies": {
-    "@anvia/chroma": "^1.2.0",
     "@anvia/core": "^1.16.0",
     "@anvia/lens": "^1.2.4",
-    "@anvia/openai": "^1.3.2"
+    "@anvia/openai": "^1.3.2",
+    "@anvia/qdrant": "^1.2.0"
   },
   "devDependencies": {
     "@types/node": "^26.6.5",

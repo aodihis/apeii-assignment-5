@@ -84,9 +84,6 @@ importers:
 
   packages/agents:
     dependencies:
-      '@anvia/chroma':
-        specifier: ^1.2.0
-        version: 1.2.0(@anvia/core@1.16.0(zod@4.6.7))
       '@anvia/core':
         specifier: ^1.16.0
         version: 1.16.0(zod@4.6.7)
@@ -96,6 +93,9 @@ importers:
       '@anvia/openai':
         specifier: ^1.3.2
         version: 1.3.2(@anvia/core@1.16.0(zod@4.6.7))(@aws-sdk/credential-provider-node@3.972.86)(@smithy/signature-v4@5.7.4)(undici@7.30.1)(ws@8.22.0)(zod@4.6.7)
+      '@anvia/qdrant':
+        specifier: ^1.2.0
+        version: 1.2.0(@anvia/core@1.16.0(zod@4.6.7))(typescript@7.0.2)
     devDependencies:
       '@types/node':
         specifier: ^26.6.5
@@ -167,11 +167,6 @@ packages:
       react-devtools-core:
         optional: true
 
-  '@anvia/chroma@1.2.0':
-    resolution: {integrity: sha512-3NZlWt+RPTlU49knm7gymbuGTfdS0A8A80nSqfUIqCxuoILSp/SECW/XX1lmG1q5MixKhNr0eLdw/MbI614suw==}
-    peerDependencies:
-      '@anvia/core': ^1.16.0
-
   '@anvia/core@1.16.0':
     resolution: {integrity: sha512-IH8c6MY0Dlg8IvmTA5fsJaDYTyyoscHaT5PMufHx+iHflwbaS8Q3ZWm0Wz0mIX4qFupmsOoKCCUfUpa7Va7SNw==}
     peerDependencies:
@@ -209,6 +204,11 @@ packages:
     resolution: {integrity: sha512-BLl7cqvgNqBbpxXkOqEgYueklcDZbRwD0Gv3mJvU6HN7TBEVrvvKSaw6rpMXvy+4UhZOHgRNwhU+4ELYivnUuQ==}
     peerDependencies:
       '@anvia/core': ^1.14.1
+
+  '@anvia/qdrant@1.2.0':
+    resolution: {integrity: sha512-GKqlYOIxwTn5nlLpsZ+la64rQzGxZQExJpnemrbL5XA9gKU7fuWwmCf9lvCFFtypiGJyBinH6nwtm0o7AVK5Lw==}
+    peerDependencies:
+      '@anvia/core': ^1.16.0
 
   '@ark/schema@0.56.7':
     resolution: {integrity: sha512-jmoOJlYIc4k1uv8oYBDNOFnAsKk2a2D9t/D6npF2JUfW4ecPB0v6ce6lruKg7lkBxIBA8Z7UtxfmvephYbhUGQ==}
@@ -1234,6 +1234,16 @@ packages:
       yauzl:
         optional: true
 
+  '@qdrant/js-client-rest@1.19.0':
+    resolution: {integrity: sha512-1+QLUHsWp+WV4PE35FLnH2ckxotWrQEqi/F3t4goF3cCThR0ZxLVtOC4OoOi/E1iyj/iIYBdbuACWMuQ15NAnA==}
+    engines: {node: '>=22.0.0'}
+    peerDependencies:
+      typescript: '>=4.7'
+
+  '@qdrant/openapi-typescript-fetch@1.2.6':
+    resolution: {integrity: sha512-oQG/FejNpItrxRHoyctYvT3rwGZOnK4jr3JdppO/c78ktDvkWiPXPHNsrDf33K9sZdRb6PR7gi4noIapu5q4HA==}
+    engines: {node: '>=18.0.0', pnpm: '>=8'}
+
   '@rolldown/binding-android-arm-eabi@1.2.14':
     resolution: {integrity: sha512-aWR+XKH9+rW7m5fWq/5360J3mHycrx/o6xZM2DQFdJnTMdyP7/WzxPjhtLbVWdKo2y612/4U1bWqb3HQhiF7vg==}
     engines: {node: ^20.19.0 || >=22.12.0}
@@ -2042,43 +2052,6 @@ packages:
   chownr@3.0.0:
     resolution: {integrity: sha512-+IxzY9BZOQd/XuYPRmrvEVjF/nqj5kgT4kEq7VofrDoM1MxoRjEWkrCC3EtLi59TVawxTAn+orJwFQcrqEN1+g==}
     engines: {node: '>=18'}
-
-  chromadb-js-bindings-darwin-arm64@1.3.4:
-    resolution: {integrity: sha512-pDdWCcR0hCz3pSDiIijBito7YG6FumewfzYE2mIjSwjrO1CKSfQKLwDdTVK4ZNpVGQa16ePoMX+pg7ShSUARJg==}
-    engines: {node: '>= 10'}
-    cpu: [arm64]
-    os: [darwin]
-
-  chromadb-js-bindings-darwin-x64@1.3.4:
-    resolution: {integrity: sha512-5vKVFXSFo+S9qC9by/7oofjcXqQK4IGHiUnPrvTfc7B52gNlPSKeyDO1wha556COc3KtXSZjICEH0nYBJ8UXng==}
-    engines: {node: '>= 10'}
-    cpu: [x64]
-    os: [darwin]
-
-  chromadb-js-bindings-linux-arm64-gnu@1.3.4:
-    resolution: {integrity: sha512-ELiqDZzU5mZd1BvZugGrhoMkVeNyQaa+PGizd06WIpIJVoHY+S+9ZBjdeM6ZkRnL3vTxD79XBrosxNWhzqy/kg==}
-    engines: {node: '>= 10'}
-    cpu: [arm64]
-    os: [linux]
-    libc: [glibc]
-
-  chromadb-js-bindings-linux-x64-gnu@1.3.4:
-    resolution: {integrity: sha512-HmTUe7PEIaBngCQ70Yyle81z2wYyg9OMgJYyRUNBYCBp4ED6zTmdaOro41Vs/c/h2UyQeBXFIKNmHDeD2Nr2fw==}
-    engines: {node: '>= 10'}
-    cpu: [x64]
-    os: [linux]
-    libc: [glibc]
-
-  chromadb-js-bindings-win32-x64-msvc@1.3.4:
-    resolution: {integrity: sha512-punrofQRzKspNMxHmv24qoPeRycV2T3KfedekGV4lOuPPG14i6qggS4x/OWLSAK7ozPfBbrzCejvCa5wfvujhQ==}
-    engines: {node: '>= 10'}
-    cpu: [x64]
-    os: [win32]
-
-  chromadb@3.5.0:
-    resolution: {integrity: sha512-A68f2RQjY3R95Pzy0j3ykOu6fi+WWCN1tjbvzrZXZoYQ1d7ZjgWr1FyzitZCeaz/0qmc8y2LEK7QmlxloOAs9Q==}
-    engines: {node: '>=20'}
-    hasBin: true
 
   ci-info@4.4.0:
     resolution: {integrity: sha512-77PSwercCZU2Fc4sX94eF8k8Pxte6JAwL4/ICZLFjJLqegs7kCuAsqqj/70NQF6TvDpgFjkubQB2FW2ZZddvQg==}
@@ -3001,6 +2974,10 @@ packages:
   undici-types@8.9.0:
     resolution: {integrity: sha512-KTDyRTYX8sWmKXAikPHHSyc63CRPETMctyjKFupcC6OBLXT3xsN0e9aF7m+mIXutFWpUXuedtowG7iLOzp0kQg==}
 
+  undici@7.29.0:
+    resolution: {integrity: sha512-IDxfleLmmbSskfWSUATiN1nfn2rDuvnMOqb5CWR92iIfojA0Ud+ulOAAEQ57LPr9rWmsreUyf5lwyao+7GNNVw==}
+    engines: {node: '>=20.18.1'}
+
   undici@7.30.1:
     resolution: {integrity: sha512-03KrMbjIFDWQR5RNPrSw3bd1r12JpyFQl9/yxjUbJtqkjmllqC5lFjZh6ujeuJCKr8EOQvRW872Oy/az+nLYxg==}
     engines: {node: '>=20.18.1'}
@@ -3309,11 +3286,6 @@ snapshots:
     optionalDependencies:
       '@types/react': 19.3.0
 
-  '@anvia/chroma@1.2.0(@anvia/core@1.16.0(zod@4.6.7))':
-    dependencies:
-      '@anvia/core': 1.16.0(zod@4.6.7)
-      chromadb: 3.5.0
-
   '@anvia/core@1.16.0(zod@4.6.7)':
     dependencies:
       yaml: 2.9.1
@@ -3353,6 +3325,13 @@ snapshots:
       '@anvia/core': 1.16.0(zod@4.6.7)
       '@opentelemetry/api': 1.9.1
       '@opentelemetry/api-logs': 0.223.0
+
+  '@anvia/qdrant@1.2.0(@anvia/core@1.16.0(zod@4.6.7))(typescript@7.0.2)':
+    dependencies:
+      '@anvia/core': 1.16.0(zod@4.6.7)
+      '@qdrant/js-client-rest': 1.19.0(typescript@7.0.2)
+    transitivePeerDependencies:
+      - typescript
 
   '@ark/schema@0.56.7':
     dependencies:
@@ -4552,6 +4531,14 @@ snapshots:
     optionalDependencies:
       yauzl: 3.4.0
 
+  '@qdrant/js-client-rest@1.19.0(typescript@7.0.2)':
+    dependencies:
+      '@qdrant/openapi-typescript-fetch': 1.2.6
+      typescript: 7.0.2
+      undici: 7.29.0
+
+  '@qdrant/openapi-typescript-fetch@1.2.6': {}
+
   '@rolldown/binding-android-arm-eabi@1.2.14':
     optional: true
 
@@ -5179,31 +5166,6 @@ snapshots:
       readdirp: 5.1.1
 
   chownr@3.0.0: {}
-
-  chromadb-js-bindings-darwin-arm64@1.3.4:
-    optional: true
-
-  chromadb-js-bindings-darwin-x64@1.3.4:
-    optional: true
-
-  chromadb-js-bindings-linux-arm64-gnu@1.3.4:
-    optional: true
-
-  chromadb-js-bindings-linux-x64-gnu@1.3.4:
-    optional: true
-
-  chromadb-js-bindings-win32-x64-msvc@1.3.4:
-    optional: true
-
-  chromadb@3.5.0:
-    dependencies:
-      semver: 7.8.5
-    optionalDependencies:
-      chromadb-js-bindings-darwin-arm64: 1.3.4
-      chromadb-js-bindings-darwin-x64: 1.3.4
-      chromadb-js-bindings-linux-arm64-gnu: 1.3.4
-      chromadb-js-bindings-linux-x64-gnu: 1.3.4
-      chromadb-js-bindings-win32-x64-msvc: 1.3.4
 
   ci-info@4.4.0: {}
 
@@ -6088,6 +6050,8 @@ snapshots:
   undici-types@8.3.0: {}
 
   undici-types@8.9.0: {}
+
+  undici@7.29.0: {}
 
   undici@7.30.1: {}
 

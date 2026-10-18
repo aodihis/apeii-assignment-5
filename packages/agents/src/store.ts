@@ -1,4 +1,4 @@
-import { ChromaVectorClient } from "@anvia/chroma";
+import { QdrantVectorClient } from "@anvia/qdrant";
 import type { TextDocument } from "@anvia/core/documents";
 import { EMBEDDING_DIMENSIONS } from "./models";
 import type { HadithMetadata } from "./hadith";
@@ -10,17 +10,17 @@ export const COLLECTIONS = {
 
 export type CollectionName = (typeof COLLECTIONS)[keyof typeof COLLECTIONS];
 
-let client: ChromaVectorClient | undefined;
+let client: QdrantVectorClient | undefined;
 
-export function getChromaClient(): ChromaVectorClient {
+export function getQdrantClient(): QdrantVectorClient {
   if (!client) {
-    client = new ChromaVectorClient({ path: process.env.CHROMA_URL ?? "http://localhost:8000" });
+    client = new QdrantVectorClient({ url: process.env.QDRANT_URL ?? "http://localhost:6333" });
   }
   return client;
 }
 
 export function getHadithStore(collectionName: CollectionName) {
-  return getChromaClient().vectorStore<TextDocument<HadithMetadata>, HadithMetadata>({
+  return getQdrantClient().vectorStore<TextDocument<HadithMetadata>, HadithMetadata>({
     collectionName,
     dimensions: EMBEDDING_DIMENSIONS,
     metric: "cosine",
