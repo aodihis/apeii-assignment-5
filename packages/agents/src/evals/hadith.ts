@@ -1,5 +1,5 @@
 import { answerRelevancy, contains, gEval, runEvalCli } from "@anvia/core/evals";
-import { getLens } from "@apeii-5/lens";
+import { getLens } from "../lens";
 import { loadHadiths } from "../hadith";
 import { runAgent } from "../agent";
 import { getModel } from "../models";
@@ -20,7 +20,7 @@ await runEvalCli({
   cases,
   target: (input: string) =>
     runAgent({ messages: [{ role: "user", content: input }], collection: COLLECTIONS.eval }),
-  reporters: [getLens("apeii-5-hadith-agent").evalReporter({ includePayloads: true })],
+  reporters: [getLens().evalReporter({ includePayloads: true })],
   metrics: [
     gEval({
       name: "correctness",

@@ -1,0 +1,16 @@
+name: apeii-5-postgres
+
+services:
+  postgres:
+    image: postgres:16
+    ports:
+      - "5433:5432"
+    environment:
+      POSTGRES_USER: apeii5
+      POSTGRES_PASSWORD: apeii5
+      POSTGRES_DB: apeii5
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+volumes:
+  pgdata:

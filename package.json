@@ -12,6 +12,8 @@
     "lens:logs": "docker compose -f infra/lens/docker-compose.yml --env-file infra/lens/.env logs -f",
     "chroma:up": "docker compose -f infra/chroma/docker-compose.yml up -d",
     "chroma:down": "docker compose -f infra/chroma/docker-compose.yml down",
+    "db:up": "docker compose -f infra/postgres/docker-compose.yml up -d",
+    "db:down": "docker compose -f infra/postgres/docker-compose.yml down",
     "ingest": "pnpm --filter @apeii-5/agents run ingest",
     "ingest:eval": "pnpm --filter @apeii-5/agents run ingest:eval",
     "eval:hadith": "pnpm --filter @apeii-5/agents run eval:hadith"
