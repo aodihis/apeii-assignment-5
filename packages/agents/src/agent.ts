@@ -1,10 +1,13 @@
 import { Agent, type Message } from "@anvia/core";
-import { BASE_INSTRUCTIONS } from "./instructions";
-import { getLens } from "./lens";
+import { getLens } from "@apeii-5/lens";
+import { INSTRUCTIONS } from "./instructions";
 import { getModel, DEFAULT_MODEL_ID } from "./models";
+import { COLLECTIONS, type CollectionName } from "./store";
+import { createSearchHadithsTool } from "./tools/search-hadiths";
 
 export type RunAgentOptions = {
   messages: readonly Message[];
+  collection?: CollectionName;
   modelId?: string;
   maxTurns?: number;
   abortSignal?: AbortSignal;
@@ -12,12 +15,13 @@ export type RunAgentOptions = {
 
 export async function runAgent(options: RunAgentOptions): Promise<string> {
   const agent = new Agent({
-    id: "apeii-5-helper",
+    id: "hadith-assistant",
     model: getModel(options.modelId ?? DEFAULT_MODEL_ID),
-    instructions: BASE_INSTRUCTIONS,
+    instructions: INSTRUCTIONS,
+    tools: [createSearchHadithsTool(options.collection ?? COLLECTIONS.data)],
     maxTurns: options.maxTurns ?? 10,
     observability: {
-      observers: { lens: getLens().observer({ captureMode: "full" }) },
+      observers: { lens: getLens("apeii-5-hadith-agent").observer({ captureMode: "full" }) },
       primaryTrace: "lens",
     },
   });

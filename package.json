@@ -9,6 +9,11 @@
     "typecheck": "pnpm -r typecheck",
     "lens:up": "docker compose -f infra/lens/docker-compose.yml --env-file infra/lens/.env up -d",
     "lens:down": "docker compose -f infra/lens/docker-compose.yml --env-file infra/lens/.env down",
-    "lens:logs": "docker compose -f infra/lens/docker-compose.yml --env-file infra/lens/.env logs -f"
+    "lens:logs": "docker compose -f infra/lens/docker-compose.yml --env-file infra/lens/.env logs -f",
+    "chroma:up": "docker compose -f infra/chroma/docker-compose.yml up -d",
+    "chroma:down": "docker compose -f infra/chroma/docker-compose.yml down",
+    "ingest": "pnpm --filter @apeii-5/agents run ingest",
+    "ingest:eval": "pnpm --filter @apeii-5/agents run ingest:eval",
+    "eval:hadith": "pnpm --filter @apeii-5/agents run eval:hadith"
   }
 }
