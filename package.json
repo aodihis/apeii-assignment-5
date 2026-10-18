@@ -1,0 +1,14 @@
+{
+  "name": "apeii-5",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev:api": "pnpm --filter @apeii-5/api dev",
+    "dev:web": "pnpm --filter @apeii-5/web dev",
+    "build": "pnpm -r build",
+    "typecheck": "pnpm -r typecheck",
+    "lens:up": "docker compose -f infra/lens/docker-compose.yml --env-file infra/lens/.env up -d",
+    "lens:down": "docker compose -f infra/lens/docker-compose.yml --env-file infra/lens/.env down",
+    "lens:logs": "docker compose -f infra/lens/docker-compose.yml --env-file infra/lens/.env logs -f"
+  }
+}
