@@ -92,8 +92,6 @@ services:
         source: /
         target: /host/root
         read_only: true
-        bind:
-          propagation: rslave
       - type: bind
         source: ${SYSTEM_MONITOR_DATA_PATH:-/var/lib/docker}
         target: /host/data
