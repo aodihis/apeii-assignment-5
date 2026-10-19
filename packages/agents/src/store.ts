@@ -4,7 +4,8 @@ import { EMBEDDING_DIMENSIONS } from "./models";
 import type { HadithMetadata } from "./hadith";
 
 export const COLLECTIONS = {
-  data: "hadiths",
+  data: process.env.QDRANT_COLLECTION ?? "hadiths",
+  // Always separate from the live collection, so evals never read/write production data.
   eval: "hadiths-eval",
 } as const;
 
