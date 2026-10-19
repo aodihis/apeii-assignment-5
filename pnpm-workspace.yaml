@@ -4,3 +4,7 @@ packages:
 allowBuilds:
   esbuild: true
   workerd: true
+minimumReleaseAgeExclude:
+  - '@anvia/client@1.6.0'
+  - '@anvia/react-ui@1.1.9'
+  - '@anvia/react@1.1.5'

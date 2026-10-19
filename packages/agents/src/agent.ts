@@ -1,4 +1,11 @@
-import { Agent, type Message, type MemoryScope, type MemoryStore, type UserMessage } from "@anvia/core";
+import {
+  Agent,
+  type AgentStream,
+  type Message,
+  type MemoryScope,
+  type MemoryStore,
+  type UserMessage,
+} from "@anvia/core";
 import { getLens } from "./lens";
 import { INSTRUCTIONS } from "./instructions";
 import { getModel, DEFAULT_MODEL_ID } from "./models";
@@ -14,7 +21,7 @@ export type RunAgentOptions = {
   abortSignal?: AbortSignal;
 };
 
-export async function runAgent(options: RunAgentOptions): Promise<string> {
+export function runAgent(options: RunAgentOptions): AgentStream<string> {
   const agent = new Agent({
     id: "hadith-assistant",
     model: getModel(options.modelId ?? DEFAULT_MODEL_ID),
@@ -28,20 +35,16 @@ export async function runAgent(options: RunAgentOptions): Promise<string> {
     },
   });
 
-  // With memory, the store already holds earlier turns, so only the latest user message is sent.
-  const outcome = options.memory
-    ? await agent.generate({
-        prompt: lastUserMessage(options.messages),
-        session: options.memory.session,
-        abortSignal: options.abortSignal,
-      })
-    : await agent.generate({ messages: options.messages, abortSignal: options.abortSignal });
-
-  if (outcome.type !== "response") {
-    throw new Error(`Agent run ended with "${outcome.type}" instead of a response.`);
+  if (options.memory) {
+    // The memory store already holds earlier turns, so send only the latest user message.
+    return agent.stream({
+      prompt: lastUserMessage(options.messages),
+      session: options.memory.session,
+      abortSignal: options.abortSignal,
+    });
   }
 
-  return outcome.output;
+  return agent.stream({ messages: options.messages, abortSignal: options.abortSignal });
 }
 
 function lastUserMessage(messages: readonly Message[]): UserMessage {

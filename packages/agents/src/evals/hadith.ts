@@ -19,7 +19,7 @@ await runEvalCli({
   name: "hadith",
   cases,
   target: (input: string) =>
-    runAgent({ messages: [{ role: "user", content: input }], collection: COLLECTIONS.eval }),
+    runAgent({ messages: [{ role: "user", content: input }], collection: COLLECTIONS.eval }).text,
   reporters: [getLens().evalReporter({ includePayloads: true })],
   metrics: [
     gEval({
