@@ -8,65 +8,33 @@ import {
   MessagePrimitive,
   ThreadPrimitive,
 } from "@anvia/react-ui";
+import type { InferResponseType } from "hono/client";
 import { useEffect, useMemo, useRef, useState } from "react";
+import { apiClient } from "../lib/api-client";
 
-// Shape of a search_hadiths tool result (see packages/agents/src/tools/search-hadiths.ts).
-type HadithMetadata = {
-  collection: string;
-  book: number;
-  hadithNumber: string;
-  babName?: string;
-  grade?: string;
-};
+// Inferred from the API's own route (apps/api/src/modules/hadiths/router.ts) - one
+// source of truth for this shape shared with the backend, no manual duplicate type.
+type HadithResponse = InferResponseType<(typeof apiClient.hadiths)[":id"]["$get"], 200>;
+type HadithMetadata = NonNullable<HadithResponse["metadata"]>;
 
-type HadithResult = {
-  id: string;
-  document: { text: string; metadata?: HadithMetadata };
-  metadata?: HadithMetadata;
-};
+function formatHadithLabel(metadata: HadithMetadata | undefined): string | undefined {
+  if (!metadata) return undefined;
+  const collection = `${metadata.collection.charAt(0).toUpperCase()}${metadata.collection.slice(1)}`;
+  return `${collection} · Book ${metadata.book}, Hadith ${metadata.hadithNumber}`;
+}
 
 export const Route = createFileRoute("/s/$id")({
   // Load the saved messages of this session before the page renders.
   loader: async ({ params }) => {
-    const res = await fetch(`/api/sessions/${params.id}/messages`);
+    const res = await apiClient.sessions[":id"].messages.$get({ param: { id: params.id } });
     if (!res.ok) throw new Error(`Failed to load session: ${res.status}`);
+    // @anvia/core's Message union has literal discriminants Hono's JSON type inference
+    // widens, so this one response is cast back to it rather than fought into shape.
     const messages = (await res.json()) as Message[];
     return { initialMessages: initialMessagesFromMemory(messages) };
   },
   component: SessionPage,
 });
-
-// The agent answers in two separate messages per turn: one carrying only the
-// search_hadiths tool call/result, then a later one with the actual explanation text.
-// Visually we want the explanation first and the hadith cards below it, so assistant
-// messages within the same turn are reordered (text-bearing ones before tool-only ones)
-// via CSS `order` - grouped per turn, so multi-turn conversations keep their real order.
-function computeMessageOrder(messages: readonly UIMessage[]): Map<string, number> {
-  const order = new Map<string, number>();
-  let next = 0;
-  let i = 0;
-
-  while (i < messages.length) {
-    if (messages[i].role !== "assistant") {
-      order.set(messages[i].id, next++);
-      i += 1;
-      continue;
-    }
-
-    const run: UIMessage[] = [];
-    while (i < messages.length && messages[i].role === "assistant") {
-      run.push(messages[i]);
-      i += 1;
-    }
-
-    const hasText = (message: UIMessage) => message.parts.some((part) => part.type === "text");
-    for (const message of [...run.filter(hasText), ...run.filter((m) => !hasText(m))]) {
-      order.set(message.id, next++);
-    }
-  }
-
-  return order;
-}
 
 function SessionPage() {
   const { id } = Route.useParams();
@@ -76,29 +44,47 @@ function SessionPage() {
   return <Chat key={id} sessionId={id} initialMessages={initialMessages} />;
 }
 
-// Shows a retrieved hadith below the agent's reply: a short excerpt by default (the
-// answer above already explains its meaning), expandable to the full text on demand.
-function HadithCard({ result }: { result: HadithResult }) {
-  const [expanded, setExpanded] = useState(false);
-  const meta = result.document.metadata ?? result.metadata;
-  const label = meta
-    ? `${meta.collection.charAt(0).toUpperCase()}${meta.collection.slice(1)} · Book ${meta.book}, Hadith ${meta.hadithNumber}`
-    : undefined;
+// Slide-over panel showing a hadith's full text, opened by clicking a citation link
+// in the agent's reply (see the markdown `a` override below). Fetches on demand by the
+// id the agent cited - the agent's instructions point that id at a Qdrant point lookup
+// (GET /api/hadiths/:id), not at a search, so this is always an exact, cheap lookup.
+type HadithPanelState =
+  | { id: string; status: "loading" }
+  | { id: string; status: "error"; error: string }
+  | { id: string; status: "ready"; detail: HadithResponse };
+
+function HadithPanel({ panel, onClose }: { panel: HadithPanelState | null; onClose: () => void }) {
+  const open = panel !== null;
+  const label = panel?.status === "ready" ? formatHadithLabel(panel.detail.metadata) : undefined;
 
   return (
-    <div className="rounded-2xl border border-taupe bg-sand p-4 shadow-sm">
-      {label && <p className="mb-1.5 text-xs font-medium tracking-wide text-mocha uppercase">{label}</p>}
-      <p className={expanded ? "whitespace-pre-line text-sm leading-6 text-espresso" : "line-clamp-3 whitespace-pre-line text-sm leading-6 text-espresso"}>
-        {result.document.text}
-      </p>
-      <button
-        type="button"
-        onClick={() => setExpanded((value) => !value)}
-        className="mt-2 text-xs font-semibold text-mocha hover:underline"
+    <>
+      <div
+        className={`fixed inset-0 z-20 bg-espresso/20 transition-opacity ${open ? "opacity-100" : "pointer-events-none opacity-0"}`}
+        onClick={onClose}
+        aria-hidden="true"
+      />
+      <aside
+        className={`fixed inset-y-0 right-0 z-30 flex w-full max-w-md flex-col border-l border-taupe bg-cream shadow-xl transition-transform duration-200 ${open ? "translate-x-0" : "translate-x-full"}`}
       >
-        {expanded ? "Show less" : "Show more"}
-      </button>
-    </div>
+        <div className="flex h-12 shrink-0 items-center justify-between border-b border-taupe px-4">
+          <span className="text-sm font-medium text-espresso/70">Hadith</span>
+          <button type="button" onClick={onClose} className="text-espresso/60 hover:text-espresso" aria-label="Close">
+            ✕
+          </button>
+        </div>
+        <div className="flex-1 overflow-y-auto p-4">
+          {panel?.status === "loading" && <p className="text-sm text-espresso/60">Loading...</p>}
+          {panel?.status === "error" && <p className="text-sm text-red-700">{panel.error}</p>}
+          {panel?.status === "ready" && (
+            <>
+              {label && <p className="mb-2 text-xs font-medium tracking-wide text-mocha uppercase">{label}</p>}
+              <p className="whitespace-pre-line text-sm leading-6 text-espresso">{panel.detail.text}</p>
+            </>
+          )}
+        </div>
+      </aside>
+    </>
   );
 }
 
@@ -110,8 +96,21 @@ function Chat({ sessionId, initialMessages }: { sessionId: string; initialMessag
   );
   const chat = useChat({ transport, initialMessages });
   const lastMessageId = chat.messages.at(-1)?.id;
-  const messageOrder = useMemo(() => computeMessageOrder(chat.messages), [chat.messages]);
   const router = useRouter();
+
+  const [hadithPanel, setHadithPanel] = useState<HadithPanelState | null>(null);
+
+  async function openHadith(id: string) {
+    setHadithPanel({ id, status: "loading" });
+    try {
+      const res = await apiClient.hadiths[":id"].$get({ param: { id } });
+      if (!res.ok) throw new Error(`Failed to load hadith: ${res.status}`);
+      const detail = await res.json();
+      setHadithPanel({ id, status: "ready", detail });
+    } catch (error) {
+      setHadithPanel({ id, status: "error", error: error instanceof Error ? error.message : "Failed to load hadith." });
+    }
+  }
 
   // First message sent from the new-chat composer.
   const pendingMessage = useLocation({
@@ -155,52 +154,58 @@ function Chat({ sessionId, initialMessages }: { sessionId: string; initialMessag
               </ThreadPrimitive.Empty>
 
               <ThreadPrimitive.Messages className="flex flex-col gap-6">
-                <MessagePrimitive.Root className="contents">
-                  {(message) => (
-                    <div
-                      style={{ order: messageOrder.get(message.id) }}
-                      className={
-                        message.role === "user"
-                          ? "ml-auto w-fit max-w-[80%] rounded-3xl bg-coffee px-4 py-2.5 text-espresso"
-                          : "max-w-full leading-7 text-espresso"
-                      }
-                    >
-                      <MessagePrimitive.Content>
-                        {/* Parts owns the smooth stream for the message that is currently streaming.
-                            Newly revealed text gets data-state="revealing", which fades in (styles.css). */}
-                        <MessagePrimitive.Parts
-                          stream={{
-                            isStreaming: chat.status === "streaming" && message.id === lastMessageId,
-                            resetKey: message.id,
-                            flushImmediately: chat.status === "error",
-                          }}
-                        >
-                          {(part) => {
-                            if (part.type === "text") {
-                              // No children: the Markdown reads the part's text itself and streams per block.
-                              return (
-                                <MessagePrimitive.Markdown className="message-markdown space-y-3 [&_a]:text-mocha [&_a]:underline [&_ol]:list-decimal [&_ol]:pl-6 [&_ul]:list-disc [&_ul]:pl-6" />
-                              );
+                <MessagePrimitive.Root>
+                  {(message) =>
+                    // The search_hadiths tool call lands as its own assistant message with no
+                    // text part - its result is only used by the model to pick citation ids now,
+                    // never rendered directly, so skip that message entirely.
+                    message.role === "assistant" && !message.parts.some((part) => part.type === "text") ? null : (
+                      <div
+                        className={
+                          message.role === "user"
+                            ? "ml-auto w-fit max-w-[80%] rounded-3xl bg-coffee px-4 py-2.5 text-espresso"
+                            : "max-w-full leading-7 text-espresso"
+                        }
+                      >
+                        <MessagePrimitive.Content>
+                          {/* Parts owns the smooth stream for the message that is currently streaming.
+                              Newly revealed text gets data-state="revealing", which fades in (styles.css). */}
+                          <MessagePrimitive.Parts
+                            stream={{
+                              isStreaming: chat.status === "streaming" && message.id === lastMessageId,
+                              resetKey: message.id,
+                              flushImmediately: chat.status === "error",
+                            }}
+                          >
+                            {(part) =>
+                              part.type === "text" ? (
+                                // No children: the Markdown reads the part's text itself and streams per block.
+                                <MessagePrimitive.Markdown
+                                  className="message-markdown space-y-3 [&_ol]:list-decimal [&_ol]:pl-6 [&_ul]:list-disc [&_ul]:pl-6"
+                                  components={{
+                                    a: ({ href, children }) =>
+                                      href?.startsWith("/hadith/") ? (
+                                        <button
+                                          type="button"
+                                          onClick={() => void openHadith(href.slice("/hadith/".length))}
+                                          className="font-semibold text-mocha underline underline-offset-2 hover:text-espresso"
+                                        >
+                                          {children}
+                                        </button>
+                                      ) : (
+                                        <a href={href} target="_blank" rel="noreferrer" className="text-mocha underline">
+                                          {children}
+                                        </a>
+                                      ),
+                                  }}
+                                />
+                              ) : null
                             }
-
-                            if (part.type === "tool" && part.toolName === "search_hadiths" && part.state === "output-available") {
-                              const results = (part.output as HadithResult[] | null) ?? [];
-                              if (results.length === 0) return null;
-                              return (
-                                <div className="mt-3 flex flex-col gap-3">
-                                  {results.map((result) => (
-                                    <HadithCard key={result.id} result={result} />
-                                  ))}
-                                </div>
-                              );
-                            }
-
-                            return null;
-                          }}
-                        </MessagePrimitive.Parts>
-                      </MessagePrimitive.Content>
-                    </div>
-                  )}
+                          </MessagePrimitive.Parts>
+                        </MessagePrimitive.Content>
+                      </div>
+                    )
+                  }
                 </MessagePrimitive.Root>
               </ThreadPrimitive.Messages>
 
@@ -221,6 +226,8 @@ function Chat({ sessionId, initialMessages }: { sessionId: string; initialMessag
           </ComposerPrimitive.Root>
         </ThreadPrimitive.Root>
       </ChatProvider>
+
+      <HadithPanel panel={hadithPanel} onClose={() => setHadithPanel(null)} />
     </main>
   );
 }

@@ -1,16 +1,13 @@
 import { Link, Outlet, createRootRoute } from "@tanstack/react-router";
-
-type SessionSummary = {
-  id: string;
-  updatedAt: string;
-  title: string;
-};
+import { apiClient } from "../lib/api-client";
 
 export const Route = createRootRoute({
+  // Typed against the API's own route definitions (see apps/web/src/lib/api-client.ts) -
+  // one source of truth for this shape shared with the backend, no manual duplicate type.
   loader: async () => {
-    const res = await fetch("/api/sessions");
+    const res = await apiClient.sessions.$get();
     if (!res.ok) throw new Error(`Failed to load sessions: ${res.status}`);
-    return { sessions: (await res.json()) as SessionSummary[] };
+    return { sessions: await res.json() };
   },
   component: RootLayout,
 });
