@@ -36,6 +36,38 @@ export const Route = createFileRoute("/s/$id")({
   component: SessionPage,
 });
 
+// The agent answers in two separate messages per turn: one carrying only the
+// search_hadiths tool call/result, then a later one with the actual explanation text.
+// Visually we want the explanation first and the hadith cards below it, so assistant
+// messages within the same turn are reordered (text-bearing ones before tool-only ones)
+// via CSS `order` - grouped per turn, so multi-turn conversations keep their real order.
+function computeMessageOrder(messages: readonly UIMessage[]): Map<string, number> {
+  const order = new Map<string, number>();
+  let next = 0;
+  let i = 0;
+
+  while (i < messages.length) {
+    if (messages[i].role !== "assistant") {
+      order.set(messages[i].id, next++);
+      i += 1;
+      continue;
+    }
+
+    const run: UIMessage[] = [];
+    while (i < messages.length && messages[i].role === "assistant") {
+      run.push(messages[i]);
+      i += 1;
+    }
+
+    const hasText = (message: UIMessage) => message.parts.some((part) => part.type === "text");
+    for (const message of [...run.filter(hasText), ...run.filter((m) => !hasText(m))]) {
+      order.set(message.id, next++);
+    }
+  }
+
+  return order;
+}
+
 function SessionPage() {
   const { id } = Route.useParams();
   const { initialMessages } = Route.useLoaderData();
@@ -78,6 +110,7 @@ function Chat({ sessionId, initialMessages }: { sessionId: string; initialMessag
   );
   const chat = useChat({ transport, initialMessages });
   const lastMessageId = chat.messages.at(-1)?.id;
+  const messageOrder = useMemo(() => computeMessageOrder(chat.messages), [chat.messages]);
   const router = useRouter();
 
   // First message sent from the new-chat composer.
@@ -122,9 +155,10 @@ function Chat({ sessionId, initialMessages }: { sessionId: string; initialMessag
               </ThreadPrimitive.Empty>
 
               <ThreadPrimitive.Messages className="flex flex-col gap-6">
-                <MessagePrimitive.Root>
+                <MessagePrimitive.Root className="contents">
                   {(message) => (
                     <div
+                      style={{ order: messageOrder.get(message.id) }}
                       className={
                         message.role === "user"
                           ? "ml-auto w-fit max-w-[80%] rounded-3xl bg-coffee px-4 py-2.5 text-espresso"
