@@ -1,11 +1,23 @@
 @import "tailwindcss";
 
+/* Warm, paper-like palette (https://colorhunt.co/palette/f9f8f6efe9e3d9cfc7c9b59c).
+   A calm, coffee-shop feel rather than a developer-tool dark mode, since this app is
+   meant to feel approachable and trustworthy to non-technical users. */
+@theme {
+  --color-cream: #f9f8f6;
+  --color-sand: #efe9e3;
+  --color-taupe: #d9cfc7;
+  --color-coffee: #c9b59c;
+  --color-mocha: #a9875f;
+  --color-espresso: #4a3728;
+}
+
 :root {
-  color-scheme: dark;
+  color-scheme: light;
 }
 
 body {
-  background-color: #09090b;
+  background-color: var(--color-cream);
 }
 
 /* The composer input is a Tiptap (ProseMirror) editor. Hide its browser focus ring. */
