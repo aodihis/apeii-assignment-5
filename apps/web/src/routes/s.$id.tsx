@@ -1,4 +1,4 @@
-import { createFileRoute, useLocation } from "@tanstack/react-router";
+import { createFileRoute, useLocation, useRouter } from "@tanstack/react-router";
 import type { Message } from "@anvia/core";
 import { createHttpClientTransport, type UIMessage } from "@anvia/client";
 import { initialMessagesFromMemory, useChat } from "@anvia/react";
@@ -37,6 +37,7 @@ function Chat({ sessionId, initialMessages }: { sessionId: string; initialMessag
   );
   const chat = useChat({ transport, initialMessages });
   const lastMessageId = chat.messages.at(-1)?.id;
+  const router = useRouter();
 
   // First message sent from the new-chat composer.
   const pendingMessage = useLocation({
@@ -52,7 +53,8 @@ function Chat({ sessionId, initialMessages }: { sessionId: string; initialMessag
     const timer = window.setTimeout(() => {
       if (sentPending.current) return;
       sentPending.current = true;
-      void chat.sendMessage({ text: pendingMessage });
+      // Once the reply lands, re-run the root loader so this new session appears in the sidebar.
+      void chat.sendMessage({ text: pendingMessage }).then(() => router.invalidate());
 
       // Clear the pending message from history, so a refresh does not send it again.
       const { pendingMessage: _ignored, ...rest } = window.history.state ?? {};
@@ -60,7 +62,7 @@ function Chat({ sessionId, initialMessages }: { sessionId: string; initialMessag
     }, 0);
 
     return () => window.clearTimeout(timer);
-  }, [pendingMessage, chat]);
+  }, [pendingMessage, chat, router]);
 
   return (
     <main className="flex min-w-0 flex-1 flex-col">
