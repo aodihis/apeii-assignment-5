@@ -12,7 +12,7 @@
     "eval:correctness": "node --env-file-if-exists=../../.env --import tsx src/evals/correctness.ts",
     "eval:answer-relevancy": "node --env-file-if-exists=../../.env --import tsx src/evals/answer-relevancy.ts",
     "eval:contains": "node --env-file-if-exists=../../.env --import tsx src/evals/contains.ts",
-    "eval:hadith": "pnpm run eval:correctness && pnpm run eval:answer-relevancy && pnpm run eval:contains"
+    "eval:hadith": "node --env-file-if-exists=../../.env --import tsx src/evals/index.ts"
   },
   "dependencies": {
     "@anvia/core": "^1.16.0",

@@ -1,3 +1,4 @@
+import { fileURLToPath } from "node:url";
 import { contains, runEvalCli } from "@anvia/core/evals";
 import { getLens } from "../lens";
 import { runAgent } from "../agent";
@@ -109,16 +110,23 @@ const cases = [
   },
 ];
 
-await runEvalCli({
-  name: "hadith-contains",
-  cases,
-  target: (input: string) =>
-    runAgent({ messages: [{ role: "user", content: input }], collection: COLLECTIONS.eval }).text,
-  reporters: [getLens().evalReporter({ includePayloads: true })],
-  metrics: [
-    contains({
-      name: "cites_related_hadith",
-      expected: (args) => new RegExp(String(args.case.metadata?.pattern), "i"),
-    }),
-  ],
-});
+export async function run() {
+  await runEvalCli({
+    name: "hadith-contains",
+    cases,
+    target: (input: string) =>
+      runAgent({ messages: [{ role: "user", content: input }], collection: COLLECTIONS.eval }).text,
+    reporters: [getLens().evalReporter({ includePayloads: true })],
+    metrics: [
+      contains({
+        name: "cites_related_hadith",
+        expected: (args) => new RegExp(String(args.case.metadata?.pattern), "i"),
+      }),
+    ],
+  });
+}
+
+// Run directly (e.g. `pnpm run eval:contains`) as well as from evals/index.ts.
+if (process.argv[1] === fileURLToPath(import.meta.url)) {
+  await run();
+}

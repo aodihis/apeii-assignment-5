@@ -1,3 +1,4 @@
+import { fileURLToPath } from "node:url";
 import { answerRelevancy, runEvalCli } from "@anvia/core/evals";
 import { getLens } from "../lens";
 import { runAgent } from "../agent";
@@ -89,13 +90,20 @@ const cases = [
   },
 ];
 
-const model = getModel();
+export async function run() {
+  const model = getModel();
 
-await runEvalCli({
-  name: "hadith-answer-relevancy",
-  cases,
-  target: (input: string) =>
-    runAgent({ messages: [{ role: "user", content: input }], collection: COLLECTIONS.eval }).text,
-  reporters: [getLens().evalReporter({ includePayloads: true })],
-  metrics: [answerRelevancy({ name: "answer_relevancy", model, threshold: 0.7 })],
-});
+  await runEvalCli({
+    name: "hadith-answer-relevancy",
+    cases,
+    target: (input: string) =>
+      runAgent({ messages: [{ role: "user", content: input }], collection: COLLECTIONS.eval }).text,
+    reporters: [getLens().evalReporter({ includePayloads: true })],
+    metrics: [answerRelevancy({ name: "answer_relevancy", model, threshold: 0.7 })],
+  });
+}
+
+// Run directly (e.g. `pnpm run eval:answer-relevancy`) as well as from evals/index.ts.
+if (process.argv[1] === fileURLToPath(import.meta.url)) {
+  await run();
+}
