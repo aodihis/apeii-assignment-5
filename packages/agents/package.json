@@ -9,11 +9,10 @@
     "typecheck": "tsc --noEmit",
     "ingest": "node --env-file-if-exists=../../.env --import tsx src/cli/ingest.ts data",
     "ingest:eval": "node --env-file-if-exists=../../.env --import tsx src/cli/ingest.ts eval",
-    "eval:women-education": "node --env-file-if-exists=../../.env --import tsx src/evals/women-education.ts",
-    "eval:asking-until-understood": "node --env-file-if-exists=../../.env --import tsx src/evals/asking-until-understood.ts",
-    "eval:convey-knowledge": "node --env-file-if-exists=../../.env --import tsx src/evals/convey-knowledge.ts",
-    "eval:lying-about-prophet": "node --env-file-if-exists=../../.env --import tsx src/evals/lying-about-prophet.ts",
-    "eval:hadith": "pnpm run eval:women-education && pnpm run eval:asking-until-understood && pnpm run eval:convey-knowledge && pnpm run eval:lying-about-prophet"
+    "eval:correctness": "node --env-file-if-exists=../../.env --import tsx src/evals/correctness.ts",
+    "eval:answer-relevancy": "node --env-file-if-exists=../../.env --import tsx src/evals/answer-relevancy.ts",
+    "eval:contains": "node --env-file-if-exists=../../.env --import tsx src/evals/contains.ts",
+    "eval:hadith": "pnpm run eval:correctness && pnpm run eval:answer-relevancy && pnpm run eval:contains"
   },
   "dependencies": {
     "@anvia/core": "^1.16.0",
