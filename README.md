@@ -10,6 +10,11 @@ cited source, and declines anything outside that scope. It uses TypeScript, Anvi
 Qdrant as the vector store, Postgres (via Prisma) for conversation memory, Hono for the API, and a
 TanStack Router + React frontend with a Claude/ChatGPT-style chat history sidebar.
 
+**Scope note:** only 100 hadiths are ingested into the live collection (see `pnpm ingest`), so the
+agent can only answer questions covered by that sample — it is not a general hadith knowledge base.
+Anything outside those 100 hadiths will correctly fall into the "couldn't find related hadiths"
+response, not an error.
+
 ## Requirements
 
 - Node.js
