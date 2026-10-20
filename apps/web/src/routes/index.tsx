@@ -1,5 +1,5 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useState, type FormEvent } from "react";
+import { useState, type SubmitEvent } from "react";
 
 declare module "@tanstack/react-router" {
   interface HistoryState {
@@ -16,7 +16,7 @@ function NewChat() {
   const navigate = useNavigate();
   const [text, setText] = useState("");
 
-  function submit(event: FormEvent<HTMLFormElement>) {
+  function submit(event: SubmitEvent<HTMLFormElement>) {
     event.preventDefault();
     const message = text.trim();
     if (!message) return;
