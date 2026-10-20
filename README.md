@@ -22,17 +22,6 @@ response, not an error.
 - Docker
 - An OpenAI-compatible API key and base URL (used for both the chat model and embeddings)
 
-## Assignment Requirements
-
-This project satisfies the assignment requirements by:
-
-- Creating a RAG agent with one focused task: answer hadith questions from retrieved sources only.
-- Giving it a `search_hadiths` vector search tool over a Qdrant collection of 100 hadiths.
-- Citing every hadith used as `(Collection, Book N, Hadith N)`, quoting retrieved text rather than paraphrasing.
-- Refusing fatwas/legal rulings and anything outside the hadith scope, with a fixed refusal reply.
-- Persisting conversation history per session (Postgres/Prisma) and exposing it in the UI as chat history, like Claude or ChatGPT.
-- Writing 20 eval cases against three metrics: `gEval()` correctness with a rubric, `answerRelevancy()`, and `contains()` with a regex that checks the reply actually cites a relevant hadith.
-
 ## Setup
 
 Install dependencies:
@@ -50,16 +39,39 @@ cp .env.example .env
 Update `.env` with your credentials:
 
 ```env
-LLM_API_KEY=your-api-key
+# Backend (apps/api, Hono)
+API_PORT=4000
+LLM_API_KEY=
 LLM_API_URL=https://openrouter.ai/api/v1
+# debug | info | warn | error. debug also logs chat turn/session ids; "error" is quietest.
+LOG_LEVEL=info
+
+# Frontend (apps/web, Vite dev server)
+WEB_PORT=5173
+# Where the browser sends API requests. Blank in dev (uses the Vite proxy
+# at /api, see vite.config.ts); set to the API's public origin in production
+# (e.g. https://api.example.com) so the frontend doesn't need to know a port.
+PUBLIC_API_URL=
+
+# Optional. Leave blank to disable tracing to the self-hosted Lens stack
+# (see infra/lens — it has its own .env, not this one).
+ANVIA_LENS_BASE_URL=
+ANVIA_LENS_PUBLIC_KEY=
+ANVIA_LENS_SECRET_KEY=
+
+# Hadith RAG. Embedding model is generic: swap provider/model/dimensions here,
+# no code change needed. EMBEDDING_API_KEY/EMBEDDING_API_URL are optional —
+# leave blank to reuse LLM_API_KEY/LLM_API_URL, or set them to use a different provider.
 EMBEDDING_API_KEY=
 EMBEDDING_API_URL=
 EMBEDDING_MODEL_ID=openai/text-embedding-3-small
 EMBEDDING_DIMENSIONS=1536
-```
+QDRANT_URL=http://localhost:6333
+QDRANT_COLLECTION=hadiths
 
-`EMBEDDING_API_KEY`/`EMBEDDING_API_URL` are optional overrides — leave them blank to reuse
-`LLM_API_KEY`/`LLM_API_URL` with a different model.
+# Agent memory (conversation history). See docker-compose.yml.
+DATABASE_URL=postgresql://apeii5:apeii5@localhost:5433/apeii5
+```
 
 Start Postgres and Qdrant:
 
