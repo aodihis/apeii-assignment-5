@@ -6,6 +6,7 @@ import { PrismaMemoryStore } from "@anvia/memory-prisma/v8";
 import type { Message } from "@anvia/core";
 import { createChatRouter } from "./modules/chat/router";
 import { hadithsRouter } from "./modules/hadiths/router";
+import { logger } from "./logger";
 
 const USER_ID = "default-user";
 
@@ -26,6 +27,28 @@ function firstUserText(messages: readonly { message: Message }[]): string | unde
 // the frontend's typed `hc` client (see apps/web/src/lib/api-client.ts).
 const app = new Hono()
   .use("*", cors())
+  // Logs every request's method, path, status, and duration at "info" - the single
+  // most useful signal for debugging a stuck or misbehaving request. Set LOG_LEVEL=debug
+  // in .env for request bodies/ids too (see the chat and hadiths routers).
+  .use("*", async (c, next) => {
+    const start = Date.now();
+    await next();
+    logger.info("request", {
+      method: c.req.method,
+      path: c.req.path,
+      status: c.res.status,
+      durationMs: Date.now() - start,
+    });
+  })
+  .onError((err, c) => {
+    logger.error("unhandled error", {
+      method: c.req.method,
+      path: c.req.path,
+      error: err instanceof Error ? err.message : String(err),
+      stack: err instanceof Error ? err.stack : undefined,
+    });
+    return c.json({ error: "Internal server error" }, 500);
+  })
   .get("/", (c) => c.json({ name: "apeii-5-api", status: "ok" }))
   .route("/chat", createChatRouter({ memoryStore, userId: USER_ID }))
   .route("/hadiths", hadithsRouter)
@@ -54,7 +77,7 @@ const app = new Hono()
 const port = Number(process.env.API_PORT ?? 3000);
 
 serve({ fetch: app.fetch, port }, (info) => {
-  console.log(`API listening on http://localhost:${info.port}`);
+  logger.info("API listening", { url: `http://localhost:${info.port}` });
 });
 
 export type AppType = typeof app;

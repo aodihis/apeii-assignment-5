@@ -5,6 +5,7 @@ import { agentToClientStream, parseClientStreamRequest } from "@anvia/client";
 import { createClientStreamResponse } from "@anvia/server";
 import type { MemoryStore } from "@anvia/core";
 import { chatQuerySchema } from "./schema";
+import { logger } from "../../logger";
 
 // The request/response bodies here are a streaming ndjson protocol owned by
 // @anvia/client/@anvia/server (parseClientStreamRequest/createClientStreamResponse),
@@ -16,9 +17,11 @@ export function createChatRouter(deps: { memoryStore: MemoryStore; userId: strin
 
     const body = parseClientStreamRequest(await c.req.json());
     if (body.type !== "messages") {
+      logger.warn("chat request rejected: not a messages request", { sessionId, bodyType: body.type });
       return c.text("This endpoint accepts messages only.", 400);
     }
 
+    logger.debug("chat turn started", { sessionId, messageCount: body.messages.length });
     const events = agentToClientStream({
       events: runAgent({
         messages: body.messages,
